@@ -84,9 +84,45 @@ It’s not good and the root cause is passing receiver by value to Unlock method
 vet.go:13: Unlock passes lock by value: main.T
 ```
 
+Option copylocks (enabled by default) checks if passed by value is something of a type having Lock method with pointer receiver. If this is the case then it throws a warning.
+
+选项copylocks (默认开启) 会检测按值传递的是否是某类型有一个需要指针类型接收者的Lock方法。如果是这样，它将给出一个警告。
+
+Example use of this mechanism is in the sync package itself. There is a special type named noCopy. To protect a type from copying by value (actually make it detectable by the vet tool), single field needs to be added to a struct like for WaitGroup:
+
+这种机制的一个使用样例是sync包。它有一个称为noCopy的特殊类型。为了避免一个类型按值拷贝(实际上通过vet工具可以检测到)，单个字段需要添加到一个结构体中(如WaitGroup):
+
+```go
+package main
+import "sync"
+type T struct {
+    wg sync.WaitGroup
+}
+func fun(T) {}
+func main() {
+    t := T{sync.WaitGroup{}}
+    fun(t)
+}
+```
+
+```
+> go tool vet lab.go
+lab.go:9: fun passes lock by value: main.T contains sync.WaitGroup contains sync.noCopy
+lab.go:13: function call copies lock value: main.T contains sync.WaitGroup contains sync.noCopy
+```
+
+Under the hood
+
+深入理解该机制
 
 
+Sources are placed in /src/cmd/vet. Every option for vet registers itself using register function which takes (among others) a variadic parameter of types of AST nodes that option is interested in and a callback. That callback function will be fired for every node of specified types. For copylocks nodes to investigate are i.e. return statements. Ultimately it all goes to lockPath which verifies if passed value is of type which has a pointer receiver method named Lock. During the whole process go/ast package is used extensively. A gentle introduction to that package can be found in Go’s Testable Examples under the hood.
 
+
+👏👏👏 below to help others discover this story. Please follow me here or on Twitter if you want to get updates about new posts or boost work on future stories.
+
+
+👏👏👏 请帮助他人找到这篇文章。如果你想接收新文章或者前沿工作， 请在这儿或者 Twitter上关注我。
 
 
 ----------------
