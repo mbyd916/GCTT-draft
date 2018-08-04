@@ -18,6 +18,8 @@ func f() {
     return
     fmt.Println("Done")
 }
+```
+```
 > go tool vet vet.go
 vet.go:8: unreachable code
 vet.go:6: missing argument for Printf("%d"): format reads arg 1, have only 0 args
@@ -54,6 +56,24 @@ func main() {
 
 > 如果 v 变量是可寻址的，并且 &v 的方法集合包含 m，那么 v.m() 是 (&v).m() 的简写。
 
+Think for a moment what might be the result of running what is implemented above…
+
+想一想上述程序运行的结果可能是什么...
+
+Program falls into a deadlock:
+
+程序会进入死锁状态：
+
+```
+fatal error: all goroutines are asleep — deadlock!
+goroutine 1 [semacquire]:
+sync.runtime_Semacquire(0x4201162ac)
+    /usr/local/go/src/runtime/sema.go:47 +0x30
+sync.(*Mutex).Lock(0x4201162a8)
+    /usr/local/go/src/sync/mutex.go:85 +0xd0
+main.(*T).Lock(0x4201162a8)
+...
+```
 
 
 ----------------
