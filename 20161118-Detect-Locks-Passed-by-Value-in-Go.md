@@ -75,6 +75,19 @@ main.(*T).Lock(0x4201162a8)
 ...
 ```
 
+It’s not good and the root cause is passing receiver by value to Unlock method so t.lock.Unlock() is actually called on a copy of the lock. It’s very easy to overlook, especially in bigger programs. It isn’t detected by the compiler since this might be an intention of the programmer. This is where vet steps in…
+
+这样的结果不对，根本原因在于接收者是按值传递给Unlock方法的，所以 t.lock.Unlock() 实际上是由lock的拷贝调用的。这点很容易被忽视，特别在更大的程序中。Go编译器不会检测这方面，因为这可能是程序员有意为之。这时vet工具派上用场啦。。。
+
+```
+> go tool vet vet.go
+vet.go:13: Unlock passes lock by value: main.T
+```
+
+
+
+
+
 
 ----------------
 
