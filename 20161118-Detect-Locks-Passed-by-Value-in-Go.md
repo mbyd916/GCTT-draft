@@ -118,6 +118,8 @@ Under the hood
 
 Sources are placed in /src/cmd/vet. Every option for vet registers itself using register function which takes (among others) a variadic parameter of types of AST nodes that option is interested in and a callback. That callback function will be fired for every node of specified types. For copylocks nodes to investigate are i.e. return statements. Ultimately it all goes to lockPath which verifies if passed value is of type which has a pointer receiver method named Lock. During the whole process go/ast package is used extensively. A gentle introduction to that package can be found in Go’s Testable Examples under the hood.
 
+vet工具的源代码放在/src/cmd/vet路径下。vet的每一个选项都利用注册函数注册自己，注册函数以该选项感兴趣的AST结点类型的可变参数以及一个回调函数。该回调函数将因特定类型的结点触发。对于copylocks结点，需要发现的是，如 return语句。最终它会走到lockPath，以验证传入的值是否有一个以指针接收者的Lock方法。在整个处理过程中，go/ast包使用非常频繁。对该包的一个入门介绍可以在Go可测试的样例中找到。
+
 
 👏👏👏 below to help others discover this story. Please follow me here or on Twitter if you want to get updates about new posts or boost work on future stories.
 
