@@ -1,14 +1,8 @@
-# Detect locks passed by value in Go
-
 # 检测Go程序中按值传递的locks
-
-Introduction to `go tool vet -copylocks`
 
 `go tool vet -copylocks`命令简介
 
-Go is shipped with vet command line tool. It runs set of heuristics on a source code to find suspicious constructs like unreachable code or calls to fmt.Printf where arguments aren’t aligned with desired format:
-
-Go 语言安装包附带[vet](https://golang.org/cmd/vet/)命令行工具。它对源码运行启发式算法以发现可疑的程序结构，如无法到达的代码或对```fmt.Printf```的调用存在参数没有按希望的格式排列：
+Go 语言安装包附带[vet](https://golang.org/cmd/vet/)命令行工具。该工具能对程序源码运行一套启发式算法以发现可疑的程序结构，如无法执行的代码或对```fmt.Printf```函数的错误调用（指arguments没有对齐format参数）：
 
 ```go
 package main
