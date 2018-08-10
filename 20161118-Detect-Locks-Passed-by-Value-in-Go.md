@@ -7,6 +7,7 @@ Go 语言安装包附带[vet](https://golang.org/cmd/vet/)命令行工具。该�
 ```go
 package main
 import "fmt"
+
 func f() {
     fmt.Printf("%d\n")
     return
@@ -19,18 +20,14 @@ vet.go:8: unreachable code
 vet.go:6: missing argument for Printf("%d"): format reads arg 1, have only 0 args
 ```
 
-This story is about one option specifically — copylocks. Let’s what it does and how it can be useful in real-world programs.
-
-本文专讲该工具的一个选项 — copylocks。让我们看看它能做什么以及如何在实际的程序中发挥作用。
-
-Suppose the program uses mutex for synchronization:
+本文专讲该工具的copylocks选项。让我们看看它能做什么以及如何在实际的程序中发挥作用。
 
 假设程序使用互斥锁进行同步：
-
 
 ```go
 package main
 import "sync"
+
 type T struct {
     lock sync.Mutex
 }
@@ -38,8 +35,9 @@ func (t *T) Lock() {
     t.lock.Lock()
 }
 func (t T) Unlock() {
-   t.lock.Unlock()
+    t.lock.Unlock()
 }
+
 func main() {
     t := T{lock: sync.Mutex{}}
     t.Lock()
@@ -48,13 +46,9 @@ func main() {
 }
 ```
 
-> 如果 v 变量是可寻址的，并且 &v 的方法集合包含 m，那么 v.m() 是 (&v).m() 的简写。
-
-Think for a moment what might be the result of running what is implemented above…
+> 如果变量 v 是可寻址的，并且 &v 的方法集合包含 m，那么 v.m() 是 (&v).m() 的简写。
 
 想一想上述程序运行的结果可能是什么...
-
-Program falls into a deadlock:
 
 程序会进入死锁状态：
 
