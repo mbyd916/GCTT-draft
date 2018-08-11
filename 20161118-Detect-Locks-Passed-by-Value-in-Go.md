@@ -63,9 +63,7 @@ main.(*T).Lock(0x4201162a8)
 ...
 ```
 
-It’s not good and the root cause is passing receiver by value to Unlock method so t.lock.Unlock() is actually called on a copy of the lock. It’s very easy to overlook, especially in bigger programs. It isn’t detected by the compiler since this might be an intention of the programmer. This is where vet steps in…
-
-这样的结果不对，根本原因是把receiver按值传递给Unlock方法，所以 ```t.lock.Unlock()``` 实际上是由lock的副本调用的。很容易忽视这点，特别在更大型的程序中。Go编译器不会检测这方面，因为这可能是程序员有意为之。该vet工具登场啦...
+运行上述程序得到了糟糕的结果，根本原因是把receiver按值传递给Unlock方法，所以 ```t.lock.Unlock()``` 实际上是由lock的副本调用的。很容易忽视这点，特别在更大型的程序中。Go编译器不会检测这方面，因为这可能是程序员有意为之。该vet工具登场啦...
 
 ```
 > go tool vet vet.go
@@ -74,11 +72,9 @@ vet.go:13: Unlock passes lock by value: main.T
 
 Option copylocks (enabled by default) checks if passed by value is something of a type having Lock method with pointer receiver. If this is the case then it throws a warning.
 
-选项copylocks (默认开启) 会检测按值传递的是否是某类型有一个需要指针类型接收者的Lock方法。如果是这样，它将给出一个警告。
+选项copylocks (默认启用) 会检测含有Lock方法(实际需要pointer receiver)的type是否按值传递。如果是这种情况，则会发出警告。
 
-Example use of this mechanism is in the sync package itself. There is a special type named noCopy. To protect a type from copying by value (actually make it detectable by the vet tool), single field needs to be added to a struct like for WaitGroup:
-
-这种机制的一个使用样例是sync包。它有一个称为noCopy的特殊类型。为了避免一个类型按值拷贝(实际上通过vet工具可以检测到)，单个字段需要添加到一个结构体中(如WaitGroup):
+sync包有使用该机制的例子，它有一个命名为noCopy的特殊type。为了避免某type按值拷贝(实际上通过vet工具进行检测)，需要往struct定义中添加一个field(如WaitGroup):
 
 ```go
 package main
@@ -108,13 +104,7 @@ Sources are placed in /src/cmd/vet. Every option for vet registers itself using 
 
 vet工具的源代码放在/src/cmd/vet路径下。vet的每一个选项都利用注册函数注册自己，注册函数以该选项感兴趣的AST结点类型的可变参数以及一个回调函数。该回调函数将因特定类型的结点触发。对于copylocks结点，需要发现的是，如 return语句。最终它会走到lockPath，以验证传入的值是否有一个以指针接收者的Lock方法。在整个处理过程中，go/ast包使用非常频繁。对该包的一个入门介绍可以在Go可测试的样例中找到。
 
-
-👏👏👏 below to help others discover this story. Please follow me here or on Twitter if you want to get updates about new posts or boost work on future stories.
-
-
-👏👏👏 请帮助他人找到这篇文章。如果你想接收新文章或者前沿工作， 请在这儿或者 Twitter上关注我。
-
-
+多点击下方的"👏"按钮， 以帮助其他人找到这篇文章哦。如果您想获得有关新帖子的更新或未来工作进展的消息， 请在这儿或者 Twitter上关注我。
 ----------------
 
 via: https://medium.com/golangspec/detect-locks-passed-by-value-in-go-efb4ac9a3f2b
