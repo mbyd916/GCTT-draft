@@ -63,7 +63,7 @@ main.(*T).Lock(0x4201162a8)
 ...
 ```
 
-运行上述程序得到了糟糕的结果，根本原因是把receiver按值传递给Unlock方法，所以 ```t.lock.Unlock()``` 实际上是由lock的副本调用的。很容易忽视这点，特别在更大型的程序中。Go编译器不会检测这方面，因为这可能是程序员有意为之。该vet工具登场啦...
+运行上述程序得到了糟糕的结果，根本原因是把receiver按值传递给Unlock方法，所以 ```t.lock.Unlock()``` 实际上是由lock的副本调用的。我们很容易忽视这点，特别在更大型的程序中。Go编译器不会检测这方面，因为这可能是程序员有意为之。该vet工具登场啦...
 
 ```
 > go tool vet vet.go
@@ -95,9 +95,9 @@ lab.go:13: function call copies lock value: main.T contains sync.WaitGroup conta
 
 深入理解该机制
 
-![under-the-hoold](https://raw.githubusercontent.com/studygolang/gctt-images/master/Detect-Locks-Passed-by-Value-in-Go/under-the-hood.jpeg)
+![under-the-hood](https://raw.githubusercontent.com/studygolang/gctt-images/master/Detect-Locks-Passed-by-Value-in-Go/under-the-hood.jpeg)
 
-vet工具的源文件放在`/src/cmd/vet`路径下。vet的每个选项都利用register函数进行注册，该函数的参数其中两个分别是一个可变参数(类型是该选项所关注的AST结点类型)和一个回调函数。该回调函数将因特定类型的结点事件触发。对于copylocks选项，需要检测的结点包含 return语句。最终都会转到lockPath，它验证传递的值是否属于某个type(拥有一个需要pointer receiver的Lock方法)。在整个处理过程中，go/ast包被广泛使用。可以在Go源码可测试的示例中找到对该包的简单介绍。
+vet工具的源文件放在`/src/cmd/vet`路径下。vet的每个选项都利用register函数进行注册，该函数其中两个参数分别是一个可变参数(类型是该选项所关注的AST结点类型)和一个回调函数。该回调函数将因特定类型的结点事件触发。对于copylocks选项，需要检测的结点包含 return语句。最终都会转到lockPath，它验证传递的值是否属于某个type(拥有一个需要pointer receiver的Lock方法)。在整个处理过程中，go/ast包被广泛使用。可以在Go源码可测试的示例中找到对该包的简单介绍。
 
 多点击下方的"👏"按钮， 以帮助其他人找到这篇文章哦。如果您想获得有关新帖子的更新或未来工作进展的消息， 请在这儿或者 Twitter上关注我。
 
