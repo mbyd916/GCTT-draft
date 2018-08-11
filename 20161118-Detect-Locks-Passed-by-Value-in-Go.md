@@ -70,9 +70,7 @@ main.(*T).Lock(0x4201162a8)
 vet.go:13: Unlock passes lock by value: main.T
 ```
 
-Option copylocks (enabled by default) checks if passed by value is something of a type having Lock method with pointer receiver. If this is the case then it throws a warning.
-
-选项copylocks (默认启用) 会检测含有Lock方法(实际需要pointer receiver)的type是否按值传递。如果是这种情况，则会发出警告。
+选项copylocks (默认启用) 会检测拥有Lock方法(实际需要pointer receiver)的type是否按值传递。如果是这种情况，则会发出警告。
 
 sync包有使用该机制的例子，它有一个命名为noCopy的特殊type。为了避免某type按值拷贝(实际上通过vet工具进行检测)，需要往struct定义中添加一个field(如WaitGroup):
 
@@ -99,9 +97,7 @@ lab.go:13: function call copies lock value: main.T contains sync.WaitGroup conta
 
 ![under-the-hoold](https://raw.githubusercontent.com/studygolang/gctt-images/master/Detect-Locks-Passed-by-Value-in-Go/under-the-hood.jpeg)
 
-Ultimately it all goes to lockPath which verifies if passed value is of type which has a pointer receiver method named Lock. 
-
-vet工具的源文件放在`/src/cmd/vet`路径下。vet的每个选项都利用register函数进行注册，该函数其中两个参数：一个可变参数(类型是该选项所关注的AST结点类型)和一个回调函数。该回调函数将因特定类型的结点触发。对于copylocks选项，需要检测的结点也就是 return语句。最终都会转到lockPath，它验证传递的值是否属于某个有Lock方法(需要一个pointer receiver)的type。在整个处理过程中，go/ast包被广泛使用。可以在Go源码可测试的示例中找到对该包的简单介绍。
+vet工具的源文件放在`/src/cmd/vet`路径下。vet的每个选项都利用register函数进行注册，该函数的参数其中两个分别是一个可变参数(类型是该选项所关注的AST结点类型)和一个回调函数。该回调函数将因特定类型的结点事件触发。对于copylocks选项，需要检测的结点包含 return语句。最终都会转到lockPath，它验证传递的值是否属于某个type(拥有一个需要pointer receiver的Lock方法)。在整个处理过程中，go/ast包被广泛使用。可以在Go源码可测试的示例中找到对该包的简单介绍。
 
 多点击下方的"👏"按钮， 以帮助其他人找到这篇文章哦。如果您想获得有关新帖子的更新或未来工作进展的消息， 请在这儿或者 Twitter上关注我。
 
