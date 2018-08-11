@@ -95,16 +95,14 @@ lab.go:9: fun passes lock by value: main.T contains sync.WaitGroup contains sync
 lab.go:13: function call copies lock value: main.T contains sync.WaitGroup contains sync.noCopy
 ```
 
-Under the hood
-
 深入理解该机制
 
+Ultimately it all goes to lockPath which verifies if passed value is of type which has a pointer receiver method named Lock. 
 
-Sources are placed in /src/cmd/vet. Every option for vet registers itself using register function which takes (among others) a variadic parameter of types of AST nodes that option is interested in and a callback. That callback function will be fired for every node of specified types. For copylocks nodes to investigate are i.e. return statements. Ultimately it all goes to lockPath which verifies if passed value is of type which has a pointer receiver method named Lock. During the whole process go/ast package is used extensively. A gentle introduction to that package can be found in Go’s Testable Examples under the hood.
-
-vet工具的源代码放在/src/cmd/vet路径下。vet的每一个选项都利用注册函数注册自己，注册函数以该选项感兴趣的AST结点类型的可变参数以及一个回调函数。该回调函数将因特定类型的结点触发。对于copylocks结点，需要发现的是，如 return语句。最终它会走到lockPath，以验证传入的值是否有一个以指针接收者的Lock方法。在整个处理过程中，go/ast包使用非常频繁。对该包的一个入门介绍可以在Go可测试的样例中找到。
+vet工具的源文件放在`/src/cmd/vet`路径下。vet的每个选项都利用register函数进行注册，该函数包含两个参数：一个可变参数(类型是该选项所关注的AST结点类型)和一个回调函数。该回调函数将因特定类型的结点触发。对于copylocks选项，需要检测的结点也就是 return语句。最终都会转到lockPath，它验证传递的值是否属于某个有Lock方法(需要一个pointer receiver)的type。在整个处理过程中，go/ast包被广泛使用。可以在Go源码可测试的示例中找到对该包的简单介绍。
 
 多点击下方的"👏"按钮， 以帮助其他人找到这篇文章哦。如果您想获得有关新帖子的更新或未来工作进展的消息， 请在这儿或者 Twitter上关注我。
+
 ----------------
 
 via: https://medium.com/golangspec/detect-locks-passed-by-value-in-go-efb4ac9a3f2b
