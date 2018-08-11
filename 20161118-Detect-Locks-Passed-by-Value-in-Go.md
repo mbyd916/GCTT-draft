@@ -97,7 +97,7 @@ lab.go:13: function call copies lock value: main.T contains sync.WaitGroup conta
 
 深入理解该机制
 
-![under-the-hoold](https://raw.githubusercontent.com/mbyd916/GCTT-draft/master/under-the-hood.jpeg)
+![under-the-hoold](https://raw.githubusercontent.com/studygolang/gctt-images/master/Detect-Locks-Passed-by-Value-in-Go/under-the-hood.jpeg)
 
 Ultimately it all goes to lockPath which verifies if passed value is of type which has a pointer receiver method named Lock. 
 
