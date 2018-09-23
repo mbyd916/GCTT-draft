@@ -53,6 +53,72 @@ Repeat until the root cause is found
 - 分析上述假设
 - 重复直到找到根本原因
 
+## Identification
+How do we even know if there is a problem (ie memory leak)? Explicit errors are direct indicators of an issue. Common errors for memory leaks are: OOM errors or explicit system crashes.
+
+我们怎么直到程序是有问题(如内存泄漏)的呢？明确的错误是一个问题的直接指示。内存泄漏问题的常见错误是：OOM 错误或明确的程序崩溃。
+
+### OOM errors
+Errors are the most explicit indicator of a problem. While user/application generated errors have the potential to generate false positives if the logic is off, an OOM error is the OS literally indicating something is using too much memory. For the error listed below this manifests as cgroup limits being reached and the container being killed.
+
+错误是一个问题的最明确的指示。尽管用户或应用产生的错误有可能导致错误的 如果逻辑是关闭的，OOM错误是指操作系统指示程序占用太多的内存。资源清单 cgroup资源限制，container将被停掉
+
+**dmesg**
+
+``` shell
+[14808.063890] main invoked oom-killer: gfp_mask=0x24000c0, order=0, oom_score_adj=0                                             [7/972]
+[14808.063893] main cpuset=34186d9bd07706222bd427bb647ceed81e8e108eb653ff73c7137099fca1cab6 mems_allowed=0
+[14808.063899] CPU: 2 PID: 11345 Comm: main Not tainted 4.4.0-130-generic #156-Ubuntu
+[14808.063901] Hardware name: innotek GmbH VirtualBox/VirtualBox, BIOS VirtualBox 12/01/2006
+[14808.063902]  0000000000000286 ac45344c9134371f ffff8800b8727c88 ffffffff81401c43
+[14808.063906]  ffff8800b8727d68 ffff8800b87a5400 ffff8800b8727cf8 ffffffff81211a1e
+[14808.063908]  ffffffff81cdd014 ffff88006a355c00 ffffffff81e6c1e0 0000000000000206
+[14808.063911] Call Trace:
+[14808.063917]  [<ffffffff81401c43>] dump_stack+0x63/0x90
+[14808.063928]  [<ffffffff81211a1e>] dump_header+0x5a/0x1c5
+[14808.063932]  [<ffffffff81197dd2>] oom_kill_process+0x202/0x3c0
+[14808.063936]  [<ffffffff81205514>] ? mem_cgroup_iter+0x204/0x3a0
+[14808.063938]  [<ffffffff81207583>] mem_cgroup_out_of_memory+0x2b3/0x300
+[14808.063941]  [<ffffffff8120836d>] mem_cgroup_oom_synchronize+0x33d/0x350
+[14808.063944]  [<ffffffff812033c0>] ? kzalloc_node.constprop.49+0x20/0x20
+[14808.063947]  [<ffffffff81198484>] pagefault_out_of_memory+0x44/0xc0
+[14808.063967]  [<ffffffff8106d622>] mm_fault_error+0x82/0x160
+[14808.063969]  [<ffffffff8106dae9>] __do_page_fault+0x3e9/0x410
+[14808.063972]  [<ffffffff8106db32>] do_page_fault+0x22/0x30
+[14808.063978]  [<ffffffff81855c58>] page_fault+0x28/0x30
+[14808.063986] Task in /docker/34186d9bd07706222bd427bb647ceed81e8e108eb653ff73c7137099fca1cab6 killed as a result of limit of /docker/34186d9bd07706222bd427bb647ceed81e8e108eb653ff73c7137099fca1cab6
+[14808.063994] memory: usage 204800kB, limit 204800kB, failcnt 4563
+[14808.063995] memory+swap: usage 0kB, limit 9007199254740988kB, failcnt 0
+[14808.063997] kmem: usage 7524kB, limit 9007199254740988kB, failcnt 0
+[14808.063986] Task in /docker/34186d9bd07706222bd427bb647ceed81e8e108eb653ff73c7137099fca1cab6 killed as a result of limit of /docker/34186d9bd07706222bd427bb647ceed81e8e108eb653ff73c7137099fca1cab6
+[14808.063994] memory: usage 204800kB, limit 204800kB, failcnt 4563
+[14808.063995] memory+swap: usage 0kB, limit 9007199254740988kB, failcnt 0
+[14808.063997] kmem: usage 7524kB, limit 9007199254740988kB, failcnt 0
+[14808.063998] Memory cgroup stats for /docker/34186d9bd07706222bd427bb647ceed81e8e108eb653ff73c7137099fca1cab6: cache:108KB rss:197168KB rss_huge:0KB mapped_file:4KB dirty:0KB writeback:0KB inactive_anon:0KB active_anon:197168KB inacti
+ve_file:88KB active_file:4KB unevictable:0KB
+[14808.064008] [ pid ]   uid  tgid total_vm      rss nr_ptes nr_pmds swapents oom_score_adj name
+[14808.064117] [10517]     0 10517    74852     4784      32       5        0             0 go
+[14808.064121] [11344]     0 11344    97590    46185     113       5        0             0 main
+[14808.064125] Memory cgroup out of memory: Kill process 11344 (main) score 904 or sacrifice child
+[14808.083306] Killed process 11344 (main) total-vm:390360kB, anon-rss:183712kB, file-rss:1016kB
+```
+
+在GitHub查看[rawsre_go_simple_memory_leak_oom_docker.txt](https://gist.github.com/dm03514/ebcf24afc93396bedbb7a267f99293d3#file-sre_go_simple_memory_leak_oom_docker-txt)
+
+**Question:** Is the error a regular repeating issue?
+
+**问题：** 这个错误是可复现的吗？
+
+Hypothesis: OOM errors are significant enough that they should rarely occur. There is a memory leak in one of the processes.
+**假设：** 发生OOM 错误意义重大，它们应该很少发生。有一个进程可能存在内存泄漏。
+
+Prediction: Either the Process memory limit has been set too low and there was a uncharacteristic bump or there is a larger issue.
+
+**推测：** 可能进程内存限制被设置得太小，有跳跃式增长；或者有更严重的问题
+
+Test: Upon further inspection there are quite a few OOM errors suggesting this is a serious issue and not a one off. Check the system memory for historic view into memory usage.
+
+**测试：** 经过进一步观察，有相当多的OOM错误出现，暗示着有严重的问题。检查系统内存历史使用情况。
 
 ----------------
 
